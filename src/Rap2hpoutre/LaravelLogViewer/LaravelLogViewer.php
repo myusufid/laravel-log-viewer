@@ -180,8 +180,8 @@ class LaravelLogViewer
                         preg_match($patern, $h[$i], $stack);
 
                         if ($current[3] == 'local') {
-                            $stack = $stack[0];
-                             $text = preg_replace($patern, '', $current[4]);
+                            $stack = $stack[0]?? null;
+                            $text = preg_replace($patern, '', $current[4]);
                         } else {
                             $stack = preg_replace("/^\n*/", '', $log_data[$i]);
                             $text = $current[4];
