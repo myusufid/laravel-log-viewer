@@ -179,7 +179,7 @@ class LaravelLogViewer
                         $patern = '/[\n\r].*| trace :\s*([^\n\r]*)/';
                         preg_match($patern, $h[$i], $stack);
 
-                        if ($current[3] == 'local') {
+                        if ($level !== 'error') {
                             $stack = $stack[0]?? null;
                             $text = preg_replace($patern, '', $current[4]);
                         } else {
