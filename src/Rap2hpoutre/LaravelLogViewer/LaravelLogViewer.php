@@ -46,7 +46,6 @@ class LaravelLogViewer
         $this->level = new Level();
         $this->pattern = new Pattern();
         $this->storage_path = function_exists('config') ? config('logviewer.storage_path', storage_path('logs')) : storage_path('logs');
-
     }
 
     /**
@@ -57,7 +56,7 @@ class LaravelLogViewer
         if (app('files')->exists($folder)) {
             $this->folder = $folder;
         }
-        if(is_array($this->storage_path)) {
+        if (is_array($this->storage_path)) {
             foreach ($this->storage_path as $value) {
                 $logsPath = $value . '/' . $folder;
                 if (app('files')->exists($logsPath)) {
@@ -95,7 +94,6 @@ class LaravelLogViewer
      */
     public function pathToLogFile($file)
     {
-
         if (app('files')->exists($file)) { // try the absolute path
             return $file;
         }
@@ -173,10 +171,20 @@ class LaravelLogViewer
             for ($i = 0, $j = count($h); $i < $j; $i++) {
                 foreach ($this->level->all() as $level) {
                     if (strpos(strtolower($h[$i]), '.' . $level) || strpos(strtolower($h[$i]), $level . ':')) {
-
                         preg_match($this->pattern->getPattern('current_log', 0) . $level . $this->pattern->getPattern('current_log', 1), $h[$i], $current);
                         if (!isset($current[4])) {
                             continue;
+                        }
+
+                        $patern = '/[\n\r].*| trace :\s*([^\n\r]*)/';
+                        preg_match($patern, $h[$i], $stack);
+
+                        if ($current[3] == 'local') {
+                            $stack = $stack[0];
+                            $text = preg_replace($patern, '', $h[$i]);
+                        } else {
+                            $stack = preg_replace("/^\n*/", '', $log_data[$i]);
+                            $text = $current[4];
                         }
 
                         $log[] = array(
@@ -186,9 +194,9 @@ class LaravelLogViewer
                             'level_class' => $this->level->cssClass($level),
                             'level_img' => $this->level->img($level),
                             'date' => $current[1],
-                            'text' => $current[4],
+                            'text' => $text,
                             'in_file' => isset($current[5]) ? $current[5] : null,
-                            'stack' => preg_replace("/^\n*/", '', $log_data[$i])
+                            'stack' => $stack
                         );
                     }
                 }
@@ -196,7 +204,6 @@ class LaravelLogViewer
         }
 
         if (empty($log)) {
-
             $lines = explode(PHP_EOL, $file);
             $log = [];
 
@@ -265,8 +272,8 @@ class LaravelLogViewer
         if (is_array($this->storage_path)) {
             foreach ($this->storage_path as $value) {
                 $files = array_merge(
-                  $files,
-                  glob(
+                    $files,
+                    glob(
                       $value . '/' . $folder . '/' . $pattern,
                       preg_match($this->pattern->getPattern('files'), $pattern) ? GLOB_BRACE : 0
                   )
